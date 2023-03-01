@@ -1,2 +1,3 @@
-# gh-action-HTTP-check-status
-Vérification de l'état HTTP des sites Web
+# Check Sites
+
+Vérification de l'état des sites et services AfricTivistes

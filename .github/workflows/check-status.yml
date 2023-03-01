@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 * * * *'  # Vérification toutes les 12 heures
+    - cron: '0 * * * *'  # Vérification toutes les heures
 
 jobs:
   check:
@@ -16,27 +16,39 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: |
-          npm install
-          npm install neat-csv
+        run: npm install
 
-      - name: Check status
-        id: check_status
-        uses: lakuapik/gh-actions-http-status@v1
+      - name: Path csv file
+        run: echo "SITE_CSV=data/site.csv" >> $GITHUB_ENV
+
+      - name: Read site CSV
+        run: |
+          SITES=$(node site-json.js)
+          echo "$SITES" >> $GITHUB_ENV
+
+      - name: Check http status code of production site
+        id: http_status
+        uses: dofbi/gh-actions-http-status@v1.1
         with:
-          sites: '${{ fromJSON(neatCSV(fileToString("data/site.csv"))) }}'
-          expected: '[200]'
+          sites: ${{ env.sites }}
+          expected: ${{ env.status }}
+
+      - name: "💫  Update README.md"
+        if: failure()
+        uses: "varunsridharan/action-dynamic-readme@main"
+        with:
+          GLOBAL_TEMPLATE_REPOSITORY: AfricTivistes/gh-action-HTTP-check-status/template
+          files: |
+            ./template/issue-body.md
+          confirm_and_push: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATUS: ${{ steps.http_status.outputs.failed_sites }}
 
       - name: Create issue
         if: failure()
-        uses: peter-evans/create-issue-from-file@v2
+        uses: peter-evans/create-issue-from-file@v4
         with:
-          title: "Problème détecté sur ${{ env.SITE }}"
-          body: |
-            $(cat template/issue-body.md)
-          labels: "bug"
-          assignees: ${{ secrets.ISSUE_ASSIGNEE }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SITE: ${{ steps.check_status.outputs.site }}
-          STATUS: ${{ steps.check_status.outputs.status }}
+          title: Problème(s) détecté(s)
+          content-filepath: ./template/issue-body.md
+          labels: bug
