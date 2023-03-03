@@ -1,4 +1,4 @@
-# Problème(s) détecté(s)
+# Problème détecté
 
 Lors de la vérification de l'état des sites.
 
