@@ -5,7 +5,8 @@ const siteCsv = process.env.SITE_CSV;
 
 async function readSiteCsv() {
     const sites = await neatCsv(fs.readFileSync(siteCsv));
-    const siteUrls = sites.map(site => site.url);
+    const filteredSites = sites.filter(site => site.ignore.toLowerCase() !== 'true');
+    const siteUrls = filteredSites.map(site => site.url);
     const siteStatus = sites.map(site => Number(site.code));
     return { SITES: siteUrls, STATUS: siteStatus };
 }
